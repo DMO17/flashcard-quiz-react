@@ -1,32 +1,20 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import FlashCardList from "./comnponents/FlashCardList";
 import "./index.css";
-import axios from "axios";
-
-const sampleData = [
-  {
-    id: uuidv4(),
-    question: "What is 2+2 ?",
-    answer: "4",
-    options: ["4", "33", "23", "55"],
-  },
-  {
-    id: uuidv4(),
-    question: "What is 5+5 ?",
-    answer: "10",
-    options: ["4", "33", "10", "55"],
-  },
-  {
-    id: uuidv4(),
-    question: "Is London the capital of England ?",
-    answer: "true",
-    options: ["true", "false"],
-  },
-];
 
 function App() {
-  const [flashCards, setFlashCards] = useState(sampleData);
+  const [flashCards, setFlashCards] = useState([]);
+  const categoryEl = useRef();
+  const amountEl = useRef();
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    axios.get("https://opentdb.com/api_category.php").then((res) => {
+      setCategories(res.data.trivia_categories);
+    });
+  }, []);
 
   const decodeHtml = (str) => {
     const textArea = document.createElement("textarea");
@@ -34,8 +22,14 @@ function App() {
     return textArea.value;
   };
 
-  useEffect(async () => {
-    const { data } = await axios.get("https://opentdb.com/api.php?amount=10");
+  const onSubmit = async (event) => {
+    event.preventDefault();
+    const { data } = await axios.get("https://opentdb.com/api.php", {
+      params: {
+        amount: amountEl.current.value,
+        category: categoryEl.current.value,
+      },
+    });
 
     const dataSample = data.results.map((cardDetails) => {
       return {
@@ -50,12 +44,44 @@ function App() {
     });
 
     setFlashCards(dataSample);
-  }, []);
+  };
 
   return (
-    <div className="container">
-      <FlashCardList flashCards={flashCards} />
-    </div>
+    <>
+      <form className="header" onSubmit={onSubmit}>
+        <div className="form-group">
+          <label htmlFor="category">Category</label>
+          <select id="category" ref={categoryEl}>
+            {categories.map((category) => {
+              return (
+                <option value={category.id} key={category.id}>
+                  {category.name}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="amount">Number of Questions</label>
+          <input
+            type="number"
+            id="amount"
+            min="1"
+            step="1"
+            defaultValue={10}
+            ref={amountEl}
+          />
+        </div>
+
+        <div className="form-group">
+          <button className="btn">Generate</button>
+        </div>
+      </form>
+      <div className="container">
+        <FlashCardList flashCards={flashCards} />
+      </div>
+    </>
   );
 }
 
