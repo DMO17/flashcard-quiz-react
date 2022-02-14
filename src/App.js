@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import FlashCardList from "./comnponents/FlashCardList";
+import "./index.css";
+import axios from "axios";
 
 const sampleData = [
   {
@@ -25,6 +27,19 @@ const sampleData = [
 
 function App() {
   const [flashCards, setFlashCards] = useState(sampleData);
+
+  useEffect(async () => {
+    const { data } = await axios.get("https://opentdb.com/api.php?amount=10");
+
+    data.results.map((cardDetails) => {
+      return {
+        id: uuidv4(),
+        question: "",
+        answer: "",
+        options: "",
+      };
+    });
+  }, []);
 
   return (
     <div>
