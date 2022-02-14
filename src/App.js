@@ -28,21 +28,32 @@ const sampleData = [
 function App() {
   const [flashCards, setFlashCards] = useState(sampleData);
 
+  const decodeHtml = (str) => {
+    const textArea = document.createElement("textarea");
+    textArea.innerHTML = str;
+    return textArea.value;
+  };
+
   useEffect(async () => {
     const { data } = await axios.get("https://opentdb.com/api.php?amount=10");
 
-    data.results.map((cardDetails) => {
+    const dataSample = data.results.map((cardDetails) => {
       return {
         id: uuidv4(),
-        question: "",
-        answer: "",
-        options: "",
+        question: decodeHtml(cardDetails.question),
+        answer: decodeHtml(cardDetails.correct_answer),
+        options: [
+          ...cardDetails.incorrect_answers.map((a) => decodeHtml(a)),
+          decodeHtml(cardDetails.correct_answer),
+        ].sort(() => Math.random() - 0.5),
       };
     });
+
+    setFlashCards(dataSample);
   }, []);
 
   return (
-    <div>
+    <div className="container">
       <FlashCardList flashCards={flashCards} />
     </div>
   );
